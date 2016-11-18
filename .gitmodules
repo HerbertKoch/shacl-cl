@@ -1,0 +1,3 @@
+[submodule "TopQuandrantShacl"]
+	path = TopQuandrantShacl
+	url = https://github.com/TopQuadrant/shacl.git
