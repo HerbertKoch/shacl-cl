@@ -1,4 +1,4 @@
-# Command Line Tool Wrapping TopBraid SHACL API
+# Command Line Tool Wrapping TopQuadrant SHACL API
 
 **An open source implementation which simply wraps the SHACL API provided by Holger Knublauch (holger@topquadrant.com).**
 
