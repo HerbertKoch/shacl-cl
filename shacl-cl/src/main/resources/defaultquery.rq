@@ -28,4 +28,4 @@ prefix message: <http://www.w3.org/ns/shacl#message>
  	OPTIONAL { 		
  		?vr sh:value ?value.
  	}
- }ORDER BY ?severity ?message
+ }ORDER BY ?resultSeverity ?resultMessage
