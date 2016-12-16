@@ -124,7 +124,7 @@ public class ShaclValidator {
 			LOGGER.log(Level.FINE, "Start validating.");
 			// Run the validator
 			ModelConstraintValidator mcv = new ModelConstraintValidator();
-			Model results = mcv.validateModel(dataset, shapesGraphURI, null, true,null, null);
+			Model results = mcv.validateModel(dataset, shapesGraphURI, null, true,null, null).getModel();
 			LOGGER.log(Level.FINE, "Finished validating.");
 			results.setNsPrefix("sh", "http://www.w3.org/ns/shacl#");
 
