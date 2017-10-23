@@ -28,6 +28,7 @@ import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
@@ -35,12 +36,14 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.resultset.ResultsFormat;
 import org.apache.jena.util.FileUtils;
 import org.topbraid.shacl.arq.SHACLFunctions;
-import org.topbraid.shacl.constraints.ModelConstraintValidator;
+//import org.topbraid.shacl.constraints.ModelConstraintValidator;
 import org.topbraid.shacl.util.ModelPrinter;
 import org.topbraid.shacl.vocabulary.SH;
 import org.topbraid.spin.arq.ARQFactory;
 import org.topbraid.spin.util.JenaUtil;
 import org.topbraid.spin.util.SystemTriples;
+
+import org.topbraid.shacl.validation.ValidationUtil;
 
 /**
  * This class is a simple wrapper for shacl utilities provided by
@@ -122,9 +125,15 @@ public class ShaclValidator {
 			Dataset dataset = ARQFactory.get().getDataset(dataModel);
 			dataset.addNamedModel(shapesGraphURI.toString(), shapesModel);
 			LOGGER.log(Level.FINE, "Start validating.");
+			
 			// Run the validator
-			ModelConstraintValidator mcv = new ModelConstraintValidator();
-			Model results = mcv.validateModel(dataset, shapesGraphURI, null, true,null, null).getModel();
+			
+			Resource report = ValidationUtil.validateModel(dataModel, dataModel, true);
+			
+//			ModelConstraintValidator mcv = new ModelConstraintValidator();
+			
+//			Model results = mcv.validateModel(dataset, shapesGraphURI, null, true,null, null).getModel();
+			Model results = report.getModel();
 			LOGGER.log(Level.FINE, "Finished validating.");
 			results.setNsPrefix("sh", "http://www.w3.org/ns/shacl#");
 
@@ -151,7 +160,7 @@ public class ShaclValidator {
 			// STD.out
 			writeResult(resultStream, outputFile);
 			resultStream.close();
-		} catch (ParseException | IOException | InterruptedException e) {
+		} catch (ParseException | IOException e) {
 			LOGGER.log(Level.SEVERE, "Critical error! \n"+e.getMessage(), e);
 			e.printStackTrace();
 		}

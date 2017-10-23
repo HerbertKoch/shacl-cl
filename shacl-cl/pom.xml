@@ -4,7 +4,7 @@
 
 	<groupId>de.herko.shaclcl</groupId>
 	<artifactId>shacl-validator</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<packaging>jar</packaging>
 
 	<build>
@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>org.topbraid</groupId>
 			<artifactId>shacl</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.2-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<properties>
