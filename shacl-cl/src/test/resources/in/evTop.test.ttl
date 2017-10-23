@@ -1,0 +1,255 @@
+# baseURI: http://publications.europa.eu/ontology/euvoc/evTop.test
+# imports: http://datashapes.org/dash
+# imports: http://publications.europa.eu/ontology/euvoc/evap14
+# prefix: ex
+
+@prefix conceptStatus: <http://publications.europa.eu/resource/authority/concept-status/> .
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix euvoc: <http://publications.europa.eu/ontology/euvoc#> .
+@prefix ev: <http://eurovoc.europa.eu/> .
+@prefix evap14: <http://publications.europa.eu/ontology/euvoc/evap14#> .
+@prefix evo: <http://eurovoc.europa.eu/schema#> .
+@prefix ex: <http://publications.europa.eu/ontology/euvoc/evTop.test#> .
+@prefix labelType: <http://publications.europa.eu/resource/authority/label-type/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix skosxl: <http://www.w3.org/2008/05/skos-xl#> .
+@prefix vocbench: <http://art.uniroma2.it/ontologies/vocbench#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://eurovoc.europa.eu/100141>
+  rdf:type skos:ConceptScheme ;
+  rdfs:comment "eurovoc" ;
+  rdfs:label "" ;
+.
+ev:candidates
+  rdf:type skos:ConceptScheme ;
+  rdfs:comment "candidates" ;
+  rdfs:label "candidates" ;
+  owl:versionInfo "1" ;
+.
+<http://publications.europa.eu/ontology/euvoc/evTop.test>
+  rdf:type owl:Ontology ;
+  rdfs:label "Test of evTop" ;
+  owl:imports <http://datashapes.org/dash> ;
+  owl:imports <http://publications.europa.eu/ontology/euvoc/evap14> ;
+  owl:versionInfo "Created with TopBraid Composer" ;
+.
+ex:ConceptScheme_1
+  rdf:type evo:MicroThesaurus ;
+  rdf:type skos:ConceptScheme ;
+  evo:approvedForRelease "4.5" ;
+  evo:domain <http://eurovoc.europa.eu/100150> ;
+  evo:hasPolyHierarchy "true"^^xsd:boolean ;
+  euvoc:domain <http://eurovoc.europa.eu/100150> ;
+  dc:identifier "3211" ;
+  dct:isPartOf <http://eurovoc.europa.eu/100141> ;
+  owl:versionInfo "4.5" ;
+  skos:hasTopConcept <http://eurovoc.europa.eu/2059> ;
+  skos:hasTopConcept <http://eurovoc.europa.eu/778> ;
+  skos:hasTopConcept <http://eurovoc.europa.eu/784> ;
+  skos:hasTopConcept <http://eurovoc.europa.eu/795> ;
+  skos:hasTopConcept <http://eurovoc.europa.eu/873> ;
+.
+ex:ConceptScheme_2
+  rdf:type skos:ConceptScheme ;
+  vocbench:hasStatus "WrongVocBenchStatus" ;
+  rdfs:comment "Concept scheme 2 no domain specification" ;
+  rdfs:label "Concept scheme 2" ;
+  owl:versionInfo "1" ;
+.
+ex:Concept_1
+  rdf:type skos:Concept ;
+  rdfs:comment "Concept 1" ;
+  rdfs:label "Concept 1" ;
+  owl:versionInfo "1" ;
+  skos:inScheme ev:domains ;
+.
+ex:Concept_2_with_VB_status
+  rdf:type skos:Concept ;
+  vocbench:hasStatus "WrongVocBenchStatus" ;
+  rdfs:comment "Concept 2 with VB status" ;
+  rdfs:label "Concept 2 with VB status" ;
+  owl:versionInfo "1" ;
+.
+ex:Concept_2_with_legacy_propeorties
+  rdf:type skos:Concept ;
+  evo:approvedForRelease "?value ." ;
+  evo:domain "?value" ;
+  evo:hasPolyHierarchy "?value" ;
+  evo:isoCountryCode "?value ." ;
+  evo:toBeTranslated "?value." ;
+  dct:identifier "?value ." ;
+  rdfs:comment "Concept 2 with legacy propeorties" ;
+  rdfs:label "Concept 2 with legacy propeorties" ;
+  owl:versionInfo "1" ;
+.
+ex:GraphValidationTestCase
+  rdf:type dash:GraphValidationTestCase ;
+  dash:expectedResult [
+      rdf:type sh:ValidationReport ;
+      sh:conforms "false"^^xsd:boolean ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode <http://eurovoc.europa.eu/100141> ;
+          sh:resultPath owl:versionInfo ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+          sh:sourceShape [] ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:ConceptScheme_1 ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b21478 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:ConceptScheme_1 ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:ConceptScheme_1 ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b21497 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:ConceptScheme_1 ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:ConceptScheme_1 ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b37846 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:ConceptScheme_1 ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:ConceptScheme_2 ;
+          sh:resultPath euvoc:domain ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+          sh:sourceShape [] ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:ConceptScheme_2 ;
+          sh:resultPath dc:identifier ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+          sh:sourceShape [] ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:ConceptScheme_2 ;
+          sh:resultPath dct:isPartOf ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+          sh:sourceShape [] ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:ConceptScheme_2 ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b57579 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveStatus ;
+          sh:value ex:ConceptScheme_2 ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_1 ;
+          sh:resultPath dc:identifier ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+          sh:sourceShape [] ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_1 ;
+          sh:resultPath skos:notation ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+          sh:sourceShape [] ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_2_with_VB_status ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b57579 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveStatus ;
+          sh:value ex:Concept_2_with_VB_status ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_2_with_legacy_propeorties ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b21478 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:Concept_2_with_legacy_propeorties ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_2_with_legacy_propeorties ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b21497 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:Concept_2_with_legacy_propeorties ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_2_with_legacy_propeorties ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint _:b37846 ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:Concept_2_with_legacy_propeorties ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_2_with_legacy_propeorties ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint [] ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveIdentifiers ;
+          sh:value ex:Concept_2_with_legacy_propeorties ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_2_with_legacy_propeorties ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint [] ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:Concept_2_with_legacy_propeorties ;
+        ] ;
+      sh:result [
+          rdf:type sh:ValidationResult ;
+          sh:focusNode ex:Concept_2_with_legacy_propeorties ;
+          sh:resultSeverity sh:Violation ;
+          sh:sourceConstraint [] ;
+          sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+          sh:sourceShape evap14:EuroVocNociveLegacyOntology ;
+          sh:value ex:Concept_2_with_legacy_propeorties ;
+        ] ;
+    ] ;
+  dash:includeSuggestions "true"^^xsd:boolean ;
+.
+_:b21478
+  <http://www.topbraid.org/c14n#true> "2"^^xsd:long ;
+.
+_:b21497
+  <http://www.topbraid.org/c14n#true> "0"^^xsd:long ;
+.
+_:b37846
+  <http://www.topbraid.org/c14n#true> "1"^^xsd:long ;
+.

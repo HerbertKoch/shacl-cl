@@ -1,0 +1,204 @@
+# baseURI: http://publications.europa.eu/ontology/euvoc/evap14
+# imports: http://datashapes.org/dash
+# imports: http://purl.org/NET/dc_owl2dl/elements
+# imports: http://purl.org/NET/dc_owl2dl/terms_od
+# imports: http://www.w3.org/2004/02/skos/core
+# imports: http://www.w3.org/2008/05/skos-xl
+
+@prefix : <http://publications.europa.eu/ontology/euvoc/evap14#> .
+@prefix conceptStatus: <http://publications.europa.eu/resource/authority/concept-status/> .
+@prefix dash: <http://datashapes.org/dash#> .
+@prefix euvoc: <http://publications.europa.eu/ontology/euvoc#> .
+@prefix ev: <http://eurovoc.europa.eu/> .
+@prefix evo: <http://eurovoc.europa.eu/schema#> .
+@prefix labelType: <http://publications.europa.eu/resource/authority/label-type/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix vocbench: <http://art.uniroma2.it/ontologies/vocbench#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://publications.europa.eu/ontology/euvoc/evap14>
+  rdf:type owl:Ontology ;
+  owl:imports <http://datashapes.org/dash> ;
+  owl:imports <http://purl.org/NET/dc_owl2dl/elements> ;
+  owl:imports <http://purl.org/NET/dc_owl2dl/terms_od> ;
+  owl:imports <http://www.w3.org/2004/02/skos/core> ;
+  owl:imports <http://www.w3.org/2008/05/skos-xl> ;
+  owl:versionInfo "Created with TopBraid Composer" ;
+.
+:EuroVocDomain
+  rdf:type rdfs:Class ;
+  rdf:type sh:NodeShape ;
+  rdfs:comment "Euro voc concept" ;
+  rdfs:label "Euro voc concept" ;
+  rdfs:subClassOf rdfs:Resource ;
+  rdfs:subClassOf <http://www.w3.org/2004/02/skos/core#Concept> ;
+  owl:versionInfo "1" ;
+  sh:property [
+      sh:path <http://purl.org/dc/elements/1.1/identifier> ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "identifier" ;
+    ] ;
+  sh:property [
+      sh:path <http://www.w3.org/2004/02/skos/core#notation> ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "notation" ;
+    ] ;
+  sh:target [
+      rdf:type sh:SPARQLTarget ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT ?this
+WHERE {
+    ?this skos:inScheme <http://eurovoc.europa.eu/domains> .
+}""" ;
+    ] ;
+.
+:EuroVocMicroThesauri
+  rdf:type sh:NodeShape ;
+  rdfs:comment "Euro voc micro thesauri" ;
+  rdfs:label "Euro voc micro thesauri" ;
+  owl:versionInfo "1" ;
+  sh:property [
+      sh:path euvoc:domain ;
+      sh:minCount 1 ;
+      sh:name "domain" ;
+    ] ;
+  sh:property [
+      sh:path <http://purl.org/dc/elements/1.1/identifier> ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "identifier" ;
+    ] ;
+  sh:property [
+      sh:path <http://purl.org/dc/terms/isPartOf> ;
+      sh:minCount 1 ;
+      sh:name "is part of" ;
+    ] ;
+  sh:target [
+      rdf:type sh:SPARQLTarget ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT ?this
+WHERE {
+    ?this a skos:ConceptScheme . 
+   FILTER ( ?this NOT IN (<http://eurovoc.europa.eu/100141>, <http://eurovoc.europa.eu/domains>, <http://eurovoc.europa.eu/candidates> )  )
+}""" ;
+    ] ;
+.
+:EuroVocNociveIdentifiers
+  rdf:type sh:NodeShape ;
+  rdfs:comment "Euro voc nocive identifiers" ;
+  rdfs:label "Euro voc nocive identifiers" ;
+  owl:versionInfo "1" ;
+  sh:sparql [
+      sh:message "there should be no DCT identifier" ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT $this
+WHERE {
+    $this <http://purl.org/dc/terms/identifier> ?value .
+}""" ;
+    ] ;
+  sh:target [
+      rdf:type sh:SPARQLTarget ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT ?this
+WHERE {
+      ?this a ?type .
+    FILTER (?type IN ( skos:Concept, skos:ConceptScheme ) )
+}""" ;
+    ] ;
+.
+:EuroVocNociveLegacyOntology
+  rdf:type sh:NodeShape ;
+  rdfs:comment "Euro voc nocive legacy ontology" ;
+  rdfs:label "Euro voc nocive legacy ontology" ;
+  owl:versionInfo "1" ;
+  sh:sparql [
+      sh:message "there shoud be no approvedForRelease propoerty from old EuroVoc Ontology" ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT $this
+WHERE {
+    $this <http://eurovoc.europa.eu/schema#approvedForRelease> ?value .
+}""" ;
+    ] ;
+  sh:sparql [
+      sh:message "there shoud be no domain propoerty from old EuroVoc Ontology" ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT $this
+WHERE {
+    $this <http://eurovoc.europa.eu/schema#domain> ?value .
+}""" ;
+    ] ;
+  sh:sparql [
+      sh:message "there shoud be no hasPolyHierarchy propoerty from old EuroVoc Ontology" ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT $this
+WHERE {
+    $this <http://eurovoc.europa.eu/schema#hasPolyHierarchy> ?value .
+}""" ;
+    ] ;
+  sh:sparql [
+      sh:message "there shoud be no isoCountryCode propoerty from old EuroVoc Ontology" ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT $this
+WHERE {
+     $this <http://eurovoc.europa.eu/schema#isoCountryCode> ?value .
+}""" ;
+    ] ;
+  sh:sparql [
+      sh:message "there shoud be no toBeTranslated propoerty from old EuroVoc Ontology" ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT $this
+WHERE {
+    $this <http://eurovoc.europa.eu/schema#toBeTranslated> ?value .
+}""" ;
+    ] ;
+  sh:target [
+      rdf:type sh:SPARQLTarget ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT ?this
+WHERE {
+    ?this a ?type .
+    FILTER (?type IN ( skos:Concept, skos:ConceptScheme ) )
+}""" ;
+    ] ;
+.
+:EuroVocNociveStatus
+  rdf:type sh:NodeShape ;
+  rdfs:comment "Euro voc nocive status" ;
+  rdfs:label "Euro voc nocive status" ;
+  owl:versionInfo "1" ;
+  sh:sparql [
+      sh:message "there should be no vocbench status" ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT $this
+WHERE {
+    $this <http://art.uniroma2.it/ontologies/vocbench#hasStatus> ?status .
+}""" ;
+    ] ;
+  sh:target [
+      rdf:type sh:SPARQLTarget ;
+      sh:prefixes <http://publications.europa.eu/ontology/euvoc/evap14> ;
+      sh:select """SELECT ?this
+WHERE {
+    ?this a ?type .
+    FILTER (?type IN ( skos:Concept, skos:ConceptScheme ) )
+}""" ;
+    ] ;
+.
+:EuroVocUmbrellaScheme
+  rdf:type sh:NodeShape ;
+  rdfs:comment "Euro voc umbrella scheme" ;
+  rdfs:label "Euro voc umbrella scheme" ;
+  owl:versionInfo "1" ;
+  sh:property [
+      sh:path owl:versionInfo ;
+      sh:maxCount 1 ;
+      sh:minCount 1 ;
+      sh:name "version info" ;
+    ] ;
+  sh:targetNode <http://eurovoc.europa.eu/100141> ;
+.
