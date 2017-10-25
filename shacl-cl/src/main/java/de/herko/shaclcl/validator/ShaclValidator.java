@@ -7,8 +7,6 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
@@ -21,29 +19,23 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.jena.graph.Graph;
-import org.apache.jena.graph.compose.MultiUnion;
-import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
 import org.apache.jena.query.QueryFactory;
-import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.sparql.resultset.ResultsFormat;
 import org.apache.jena.util.FileUtils;
 import org.topbraid.shacl.arq.SHACLFunctions;
 //import org.topbraid.shacl.constraints.ModelConstraintValidator;
 import org.topbraid.shacl.util.ModelPrinter;
+import org.topbraid.shacl.validation.ValidationUtil;
 import org.topbraid.shacl.vocabulary.SH;
-import org.topbraid.spin.arq.ARQFactory;
 import org.topbraid.spin.util.JenaUtil;
 import org.topbraid.spin.util.SystemTriples;
-
-import org.topbraid.shacl.validation.ValidationUtil;
 
 /**
  * This class is a simple wrapper for shacl utilities provided by
@@ -61,14 +53,15 @@ public class ShaclValidator {
 
 	// to keep command line parameter
 	static String path = null;
+	static String shapes = null;
 	static String outputFile = null;
 	static String format = "TXT"; // default
 	static String queryFile = "defaultquery.rq";
 	static String queryStr = null;
-	static boolean debug = false; // �might be used later
+	static boolean debug = false; // might be used later
 	static String raw = null;
+	static boolean validateShapes = false; // default, my switch on presents of shapes
 
-	
 	/**
 	 * Loads SHACL file(s) and rdf file(s) and validates all constraints.
 	 */
@@ -84,20 +77,38 @@ public class ShaclValidator {
 			createCommandLineOptions();
 			handleCommandLineOptions(args);
 			// get fileList
+			File shapesFile = null;
 			File pathFile = new File(path);
 			// make some checks
 			if (!pathFile.isDirectory() && !pathFile.canRead()) {
-				System.err.println("Reading path failed.  Reason: unreadable");
+				System.err.println("Reading model path failed.  Reason: unreadable");
 				printHelp();
 				System.exit(1);
 			} else if (pathFile.list(new LocalFileFilter()).length == 0) {
-				System.err.println("Reading path path.  Reason: empty");
+				System.err.println("Reading model path path.  Reason: empty");
 				printHelp();
 				System.exit(1);
 			}
 
-			LOGGER.log(Level.FINE, "Start loading files from " + pathFile.getAbsolutePath() + ".");
+			// shapes might be already only one file
+			if (shapes != null) {
+				shapesFile = new File(shapes);
+				if (!shapesFile.canRead()) {
+					System.err.println("Reading shapes path failed.  Reason: unreadable");
+					printHelp();
+					System.exit(1);
+				} else if (shapesFile.isDirectory() && shapesFile.list(new LocalFileFilter()).length == 0) {
+					System.err.println("Reading shapes path path.  Reason: empty");
+					printHelp();
+					System.exit(1);
+				}
+
+			}
+
+			LOGGER.log(Level.FINE, "Start loading models  from " + pathFile.getAbsolutePath() + ".");
+
 			Model dataModel = JenaUtil.createMemoryModel();
+
 			for (File file : pathFile.listFiles(new LocalFileFilter())) {
 				LOGGER.log(Level.FINE, "Loading file " + file.getAbsolutePath() + " to Model.");
 				Model dataModelTmp = JenaUtil.createMemoryModel();
@@ -105,40 +116,83 @@ public class ShaclValidator {
 				dataModelTmp.read(is, null, checkForFileLang(file.getName()));
 				dataModel.add(dataModelTmp);
 			}
-			LOGGER.log(Level.FINE, "Finished loading files from " + pathFile.getAbsolutePath() + ".");
+			LOGGER.log(Level.FINE, "Finished loading models from " + pathFile.getAbsolutePath() + ".");
+
+			Model loadedShapesModel = null;
+			if (shapesFile != null) {
+				LOGGER.log(Level.FINE, "Start loading shapes from " + shapesFile.getAbsolutePath() + ".");
+				loadedShapesModel = JenaUtil.createMemoryModel();
+				if (shapesFile.isDirectory()) {
+					for (File file : shapesFile.listFiles(new LocalFileFilter())) {
+						LOGGER.log(Level.FINE, "Loading file " + file.getAbsolutePath() + " to Model.");
+						Model dataModelTmp = JenaUtil.createMemoryModel();
+						FileInputStream is = new FileInputStream(file);
+						dataModelTmp.read(is, null, checkForFileLang(file.getName()));
+						loadedShapesModel.add(dataModelTmp);
+					}
+				LOGGER.log(Level.FINE, "Finished loading shapes from " + shapesFile.getAbsolutePath() + ".");					
+				} else if (shapesFile.isFile()) {
+					LOGGER.log(Level.FINE, "Loading file " + shapesFile.getAbsolutePath() + " to Model.");
+					Model dataModelTmp = JenaUtil.createMemoryModel();
+					FileInputStream is = new FileInputStream(shapesFile);
+					dataModelTmp.read(is, null, checkForFileLang(shapesFile.getName()));
+					loadedShapesModel.add(dataModelTmp);
+					LOGGER.log(Level.FINE, "Finished loading shapes file " + shapesFile.getAbsolutePath() + ".");
+				}
+
+			}
+
 			// Load the shapes Model (here, includes the dataModel because that
 			// has
 			// shape definitions too)SHACLSystemModel
-			Model shaclModel = ShaclValidator.getSHACLModel();
+			// Model shaclModel = ShaclValidator.getSHACLModel();
 
-			MultiUnion unionGraph = new MultiUnion(new Graph[] { shaclModel.getGraph(), dataModel.getGraph()});
-			Model shapesModel = ModelFactory.createModelForGraph(unionGraph);
+			// MultiUnion unionGraph = null;
+			//
+			// if (loadedShapesModel != null) {
+			// unionGraph = new MultiUnion(new Graph[] { shaclModel.getGraph(),
+			// loadedShapesModel.getGraph() });
+			// } else {
+			// unionGraph = new MultiUnion(new Graph[] { shaclModel.getGraph(),
+			// dataModel.getGraph() });
+			// }
+
+			// maybe obsolete
+			// Model shapesModel = ModelFactory.createModelForGraph(unionGraph);
 
 			// Make sure all sh:Functions are registered
-			SHACLFunctions.registerFunctions(shapesModel);
+			// SHACLFunctions.registerFunctions(shapesModel);
 
 			// Create Dataset that contains both the main query model and the
 			// shapes
 			// model
 			// (here, using a temporary URI for the shapes graph)
-			URI shapesGraphURI = URI.create("urn:x-shacl-shapes-graph:" + UUID.randomUUID().toString());
-			Dataset dataset = ARQFactory.get().getDataset(dataModel);
-			dataset.addNamedModel(shapesGraphURI.toString(), shapesModel);
+			// URI shapesGraphURI = URI.create("urn:x-shacl-shapes-graph:" +
+			// UUID.randomUUID().toString());
+
+			// Dataset dataset = ARQFactory.get().getDataset(dataModel);
+			// dataset.addNamedModel(shapesGraphURI.toString(), shapesModel);
+
 			LOGGER.log(Level.FINE, "Start validating.");
-			
+
 			// Run the validator
-			
-			Resource report = ValidationUtil.validateModel(dataModel, dataModel, true);
-			
-//			ModelConstraintValidator mcv = new ModelConstraintValidator();
-			
-//			Model results = mcv.validateModel(dataset, shapesGraphURI, null, true,null, null).getModel();
+			Resource report = null;
+			if (loadedShapesModel != null) {
+				report = ValidationUtil.validateModel(dataModel, loadedShapesModel, validateShapes);
+			} else {
+				report = ValidationUtil.validateModel(dataModel, dataModel, true);
+			}
+
+			// ModelConstraintValidator mcv = new ModelConstraintValidator();
+			// Model results = mcv.validateModel(dataset, shapesGraphURI, null, true,null,
+			// null).getModel();
+
 			Model results = report.getModel();
 			LOGGER.log(Level.FINE, "Finished validating.");
 			results.setNsPrefix("sh", "http://www.w3.org/ns/shacl#");
 
 			// Print violations
-			if (raw != null){
+			if (raw != null) {
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 				String resultOutput = ModelPrinter.get().print(results);
 				if (resultOutput != null) {
@@ -146,13 +200,13 @@ public class ShaclValidator {
 					writeResult(outputStream, raw);
 				}
 				outputStream.close();
-				
-			}			
+
+			}
 			// System.out.println( ResultSetFormatter.asText((ResultSet)
 			// results));
 			// System.out.println(ModelPrinter.get().print(results));
 
-			//filter using query
+			// filter using query
 			ResultSet resultSet = filterResult(results, queryStr);
 			// formating result using query
 			ByteArrayOutputStream resultStream = formatOutput(resultSet, format);
@@ -161,7 +215,7 @@ public class ShaclValidator {
 			writeResult(resultStream, outputFile);
 			resultStream.close();
 		} catch (ParseException | IOException e) {
-			LOGGER.log(Level.SEVERE, "Critical error! \n"+e.getMessage(), e);
+			LOGGER.log(Level.SEVERE, "Critical error! \n" + e.getMessage(), e);
 			e.printStackTrace();
 		}
 		LOGGER.log(Level.FINE, "Finished processing SHACL validation.");
@@ -169,9 +223,13 @@ public class ShaclValidator {
 
 	/**
 	 * Method checks command line parameter
-	 * @param args String[] original command line parameters
-	 * @throws ParseException possible parsing the command line cause exception
-	 * @throws IOException possible file handling cause exception
+	 * 
+	 * @param args
+	 *            String[] original command line parameters
+	 * @throws ParseException
+	 *             possible parsing the command line cause exception
+	 * @throws IOException
+	 *             possible file handling cause exception
 	 */
 	private static void handleCommandLineOptions(String[] args) throws ParseException, IOException {
 		CommandLineParser parser = new DefaultParser();
@@ -186,6 +244,12 @@ public class ShaclValidator {
 			printHelp();
 			System.exit(1);
 		}
+
+		shapes = cmd.getOptionValue("shapes");
+		if (cmd.getOptionValue("shapes") == null) {
+			validateShapes = true;
+		}
+
 		if (cmd.getOptionValue("format") != null) {
 
 			if (cmd.getOptionValue("format").matches("(TXT|XML|CSV|TTL|txt|xml|csv|ttl)")) {
@@ -210,6 +274,10 @@ public class ShaclValidator {
 			outputFile = cmd.getOptionValue("out");
 		}
 
+		if (cmd.hasOption("validateShapes") != false) {
+			validateShapes = true; // might already be set to true if property shapes is null
+		}
+
 		if (cmd.hasOption("debug") != false) {
 			debug = true;
 			// set logger output level
@@ -217,7 +285,7 @@ public class ShaclValidator {
 		} else {
 			LOGGER.setLevel(Level.WARNING);
 		}
-		if (cmd.getOptionValue("raw") != null){
+		if (cmd.getOptionValue("raw") != null) {
 			raw = cmd.getOptionValue("raw");
 		}
 	}
@@ -263,8 +331,11 @@ public class ShaclValidator {
 
 	/**
 	 * Method queries the <code>Jena Model</code>.
-	 * @param result Model to process
-	 * @param queryStr String
+	 * 
+	 * @param result
+	 *            Model to process
+	 * @param queryStr
+	 *            String
 	 * @return ResultSet result from query
 	 */
 	private static ResultSet filterResult(Model result, String queryStr) {
@@ -279,13 +350,14 @@ public class ShaclValidator {
 
 		queryResult.getResourceModel().setNsPrefix("sh", "http://www.w3.org/ns/shacl#");
 		// close this resource
-		//qe.close();
+		// qe.close();
 		LOGGER.log(Level.FINE, "Finished filtering using sparql.");
 		return queryResult;
 	}
+
 	/**
-	 * Method filters the given <code>result</code> using sparql and provides
-	 * byte array stream containing the result of </br>
+	 * Method filters the given <code>result</code> using sparql and provides byte
+	 * array stream containing the result of </br>
 	 * the sparql query using the provided <code>format</code>.</br>
 	 * The different formats are created using standard jena
 	 * <code>ResultSetFormatter</code>
@@ -295,8 +367,8 @@ public class ShaclValidator {
 	 * @param queryStr
 	 *            String containing sparql query
 	 * @param format
-	 *            String switching output format, currently only provided TXT,
-	 *            CSV, XML
+	 *            String switching output format, currently only provided TXT, CSV,
+	 *            XML
 	 * @return ByteArrayOutputStream
 	 * @throws IOException
 	 *             Writing to stream might cause problems
@@ -317,7 +389,7 @@ public class ShaclValidator {
 			ResultSetFormatter.output(outputStream, queryResult, ResultsFormat.FMT_RS_CSV);
 		} else if (format.matches("(XML)")) {
 			ResultSetFormatter.outputAsXML(outputStream, queryResult);
-		}  else if (format.matches("(TTL)")) {
+		} else if (format.matches("(TTL)")) {
 			ResultSetFormatter.output(outputStream, queryResult, ResultsFormat.FMT_RDF_TTL);
 		} else {
 			// output txt
@@ -328,21 +400,25 @@ public class ShaclValidator {
 		}
 		// close this resource
 		qe.close();
-		
+
 		LOGGER.log(Level.FINE, "Finished filtering.");
 		return outputStream;
 
 	}
-	
+
 	/**
-	 * Method formats the <code>ResultSet</code> using the given format TXT, CSV, XML or TTL. Where as TXT is used as default.
-	 * @param queryResult ResultSet
-	 * @param format String TXT, CSV, XML or TTL
+	 * Method formats the <code>ResultSet</code> using the given format TXT, CSV,
+	 * XML or TTL. Where as TXT is used as default.
+	 * 
+	 * @param queryResult
+	 *            ResultSet
+	 * @param format
+	 *            String TXT, CSV, XML or TTL
 	 * @return ByteArrayOutputStream prepared for output
 	 * @throws IOException
 	 */
 	private static ByteArrayOutputStream formatOutput(ResultSet queryResult, String format) throws IOException {
-		LOGGER.log(Level.FINE, "Start formating to "+format+".");
+		LOGGER.log(Level.FINE, "Start formating to " + format + ".");
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
 		if (format.matches("(CSV)")) {
@@ -358,7 +434,7 @@ public class ShaclValidator {
 				outputStream.write(resultOutput.getBytes());
 			}
 		}
-		LOGGER.log(Level.FINE, "Finished formating to "+format+".");
+		LOGGER.log(Level.FINE, "Finished formating to " + format + ".");
 		return outputStream;
 	}
 
@@ -367,13 +443,20 @@ public class ShaclValidator {
 	 */
 	private static void createCommandLineOptions() {
 		// add t option
-		options.addOption("p", "path", true, "Full Path to loadable files (.RDF, .TTL).");
+		options.addOption("p", "path", true,
+				"Full path to loadable data Model and/or shapes model files (.RDF, .TTL).");
+		options.addOption("s", "shapes", true,
+				"Full path to loadable shapes model (.RDF, .TTL). \n" 
+						+ " In case it's seperrated from option p. In case this path is a directry it tries to load all files, in case it is a single file it loads only this file.");
 		options.addOption("f", "format", true, "Output format, possible values TXT (default); CSV; XML; TTL");
 		options.addOption("q", "query", true, "Full Path to file containing one sparql query to filter shacl result.");
 		options.addOption("o", "out", true, "File name and path to output file.");
 		options.addOption("d", "debug", false, "Debug mode, creates some additional output info.");
 		options.addOption("h", "help", false, "Prints this info.");
 		options.addOption("r", "raw", true, "Path/File name for raw output before filtering using TTL output format.");
+		options.addOption("v", "validateShapes", false,
+				"Validate shapes inside data model. \n Default is false, cause expecting shapes in separated folder. In case the option -s is not used it's set to true, exprecting shapes inside the data models.");
+
 	}
 
 	/**
@@ -386,8 +469,8 @@ public class ShaclValidator {
 	}
 
 	/**
-	 * Method checks file format simply by mapping the file extensions to
-	 * expected format.</br>
+	 * Method checks file format simply by mapping the file extensions to expected
+	 * format.</br>
 	 * <ul>
 	 * <li>extension .ttl --> FileUtils.langTurtle.</li>
 	 * <li>extension .rdf --> FileUtils.langXML.</li>
@@ -418,20 +501,20 @@ public class ShaclValidator {
 		Model shaclModel = null;
 		if (shaclModel == null) {
 			shaclModel = JenaUtil.createDefaultModel();
-			
+
 			InputStream shaclTTL = ShaclValidator.class.getResourceAsStream("/etc/shacl.ttl");
 			shaclModel.read(shaclTTL, SH.BASE_URI, FileUtils.langTurtle);
-			
+
 			InputStream dashTTL = ShaclValidator.class.getResourceAsStream("/etc/dash.ttl");
 			shaclModel.read(dashTTL, SH.BASE_URI, FileUtils.langTurtle);
-			
+
 			InputStream toshTTL = ShaclValidator.class.getResourceAsStream("/etc/tosh.ttl");
 			shaclModel.read(toshTTL, SH.BASE_URI, FileUtils.langTurtle);
-			
+
 			shaclModel.add(SystemTriples.getVocabularyModel());
-			
+
 			SHACLFunctions.registerFunctions(shaclModel);
-			
+
 		}
 		return shaclModel;
 	}
